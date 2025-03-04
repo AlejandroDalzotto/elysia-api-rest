@@ -1,7 +1,7 @@
 import { Elysia, t } from 'elysia';
 import { jwt } from '@elysiajs/jwt'
 import { UserService } from '@/services/user.service';
-import { maxLengthUsername, minLengthEmail, minLengthPassword, minLengthUsername } from '@/lib/consts';
+import { maxLengthUsername, minLengthEmail, minLengthPassword, minLengthUsername } from '@/utils/consts';
 import { JWT_SECRET } from '@/config/env';
 import { db } from '@/db';
 import { users } from '@/db/schema/users.sql';

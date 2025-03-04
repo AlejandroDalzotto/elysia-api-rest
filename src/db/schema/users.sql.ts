@@ -1,4 +1,4 @@
-import { maxLengthUsername } from '@/lib/consts';
+import { maxLengthUsername } from '@/utils/consts';
 import { pgTable, uuid, varchar } from 'drizzle-orm/pg-core';
 import { timestamps } from '@/db/schema/timestamps.helpers';
 
