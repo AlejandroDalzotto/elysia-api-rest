@@ -6,10 +6,15 @@
     "dev": "bun run --watch src/index.ts"
   },
   "dependencies": {
-    "elysia": "latest"
+    "@elysiajs/jwt": "^1.2.0",
+    "drizzle-orm": "^0.40.0",
+    "elysia": "latest",
+    "zod": "^3.24.2"
   },
   "devDependencies": {
-    "bun-types": "latest"
+    "@elysiajs/swagger": "^1.2.2",
+    "bun-types": "latest",
+    "drizzle-kit": "^0.30.5"
   },
   "module": "src/index.js"
 }
