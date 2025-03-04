@@ -5,7 +5,9 @@ import { eq } from 'drizzle-orm';
 export abstract class UserRepository {
 
   static async getAll() {
-    throw new Error('method not implemented yet')
+    const data = await db.select().from(users)
+
+    return data
   }
 
   static async getOneById(id: unknown) {
@@ -19,7 +21,7 @@ export abstract class UserRepository {
   }
 
   static async save(body: InsertUser) {
-    const [data] = await db.insert(users).values(body).returning()
+    const [data] = await db.insert(users).values(body).returning({ insertedId: users.id });
 
     return data
   }

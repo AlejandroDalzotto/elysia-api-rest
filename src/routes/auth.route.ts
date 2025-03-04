@@ -3,6 +3,8 @@ import { jwt } from '@elysiajs/jwt'
 import { UserService } from '@/services/user.service';
 import { maxLengthUsername, minLengthEmail, minLengthPassword, minLengthUsername } from '@/lib/consts';
 import { JWT_SECRET } from '@/config/env';
+import { db } from '@/db';
+import { users } from '@/db/schema/users.sql';
 
 const authModels = new Elysia({ name: 'models.auth' })
   .model({
@@ -25,20 +27,21 @@ export const authRoutes = new Elysia({ prefix: '/auth' })
       secret: JWT_SECRET
     })
   )
-  .put('/sign-up', async ({ body, error, jwt }) => {
+  .put('/sign-up', async ({ body, error }) => {
 
-    const isEmailAlreadyTaken = await UserService.existByEmail(body.email)
+    const { email, password, username } = body
+
+    const isEmailAlreadyTaken = await UserService.existByEmail(email)
     if (isEmailAlreadyTaken) {
-      return error(400, `Email ${body.email} is already taken, please provide another.`)
+      return error(400, `Email ${email} is already taken, please provide another.`)
     }
 
-    const user = await UserService.create(body)
+    const encryptedPassword = await Bun.password.hash(password)
 
-    const token = await jwt.sign({ id: user.id })
+    const user = await UserService.create({ email, password: encryptedPassword, username })
 
     return {
-      data: user,
-      token,
+      data: user
     }
   }, {
     body: 'signUp'
@@ -47,4 +50,11 @@ export const authRoutes = new Elysia({ prefix: '/auth' })
 
   }, {
     body: 'signIn'
+  })
+  .get('/get-all', async () => {
+    const usersData = await db.select().from(users)
+
+    return {
+      data: usersData
+    }
   })

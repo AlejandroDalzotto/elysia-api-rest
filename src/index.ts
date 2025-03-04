@@ -4,6 +4,11 @@ import { authRoutes } from '@/routes/auth.route';
 import { PORT } from '@/config/env';
 
 const app = new Elysia({ prefix: '/api' })
+  .onError(({ code, path, error }) => {
+
+    console.error(`error [${code}] on [${path}] ${error}`)
+
+  })
   .use(swagger({
     autoDarkMode: true,
     path: '/docs',
@@ -14,4 +19,8 @@ const app = new Elysia({ prefix: '/api' })
 
 console.log(
   `🦊 Server is running at ${app.server?.url.href}`
+);
+
+console.log(
+  `📄 Go to docs: ${app.server?.url.href}api/docs`
 );

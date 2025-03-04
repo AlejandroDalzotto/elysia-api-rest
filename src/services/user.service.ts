@@ -2,7 +2,11 @@ import { InsertUser } from '@/db/schema/users.sql';
 import { UserRepository } from '@/repositories/user.repository';
 
 export abstract class UserService {
-  static async findAll() { }
+  static async findAll() {
+    const data = UserRepository.getAll()
+
+    return data
+  }
   static async findOneById(id: unknown) { }
   static async create(body: InsertUser) {
     const data = await UserRepository.save(body)
