@@ -1,10 +1,17 @@
 import { Elysia } from 'elysia';
-import { authRoutes } from './routes/auth.route';
+import { swagger } from '@elysiajs/swagger';
+import { authRoutes } from '@/routes/auth.route';
+import { PORT } from '@/config/env';
 
 const app = new Elysia({ prefix: '/api' })
+  .use(swagger({
+    autoDarkMode: true,
+    path: '/docs',
+    exclude: ['/api/docs', '/api/docs/json']
+  }))
   .use(authRoutes)
-  .listen(3000);
+  .listen(PORT);
 
 console.log(
-  `🦊 Elysia is running at ${app.server?.hostname}:${app.server?.port}`
+  `🦊 Server is running at ${app.server?.url.href}`
 );

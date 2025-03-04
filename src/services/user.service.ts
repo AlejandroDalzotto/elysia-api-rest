@@ -1,5 +1,5 @@
-import { InsertUser } from "@/db/schema/users.sql";
-import { UserRepository } from "@/repositories/user.repository";
+import { InsertUser } from '@/db/schema/users.sql';
+import { UserRepository } from '@/repositories/user.repository';
 
 export abstract class UserService {
   static async findAll() { }

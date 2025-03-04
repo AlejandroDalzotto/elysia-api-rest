@@ -7,10 +7,11 @@ const envSchema = z.object({
   NODE_ENV: z.optional(z.enum(['development', 'production'])).default('development')
 })
 
-const { success, data, error } = envSchema.safeParse(Bun.env)
+const { success, data, error } = envSchema.safeParse(process.env)
 
 if (!success) {
-  console.error(`Error trying to load env variables: ${error.format()}`)
+  console.error('Error trying to load env variables:')
+  console.error(error.message)
   process.exit(1)
 }
 

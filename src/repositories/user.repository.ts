@@ -1,6 +1,6 @@
-import { db } from "@/db"
-import { InsertUser, SelectUser, users } from "@/db/schema/users.sql"
-import { eq } from "drizzle-orm"
+import { db } from '@/db';
+import { InsertUser, users } from '@/db/schema/users.sql';
+import { eq } from 'drizzle-orm';
 
 export abstract class UserRepository {
 

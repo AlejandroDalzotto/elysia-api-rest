@@ -2,6 +2,7 @@ import { Elysia, t } from 'elysia';
 import { jwt } from '@elysiajs/jwt'
 import { UserService } from '@/services/user.service';
 import { maxLengthUsername, minLengthEmail, minLengthPassword, minLengthUsername } from '@/lib/consts';
+import { JWT_SECRET } from '@/config/env';
 
 const authModels = new Elysia({ name: 'models.auth' })
   .model({
@@ -21,7 +22,7 @@ export const authRoutes = new Elysia({ prefix: '/auth' })
   .use(
     jwt({
       name: 'jwt',
-      secret: 'secret'
+      secret: JWT_SECRET
     })
   )
   .put('/sign-up', async ({ body, error, jwt }) => {

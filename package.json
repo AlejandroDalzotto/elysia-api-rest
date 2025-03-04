@@ -2,13 +2,14 @@
   "name": "elysia-social-media",
   "version": "1.0.50",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "dev": "bun run --watch src/index.ts"
+    "dev": "bun run --watch src/index.ts",
+    "db:push": "bunx drizzle-kit push"
   },
   "dependencies": {
     "@elysiajs/jwt": "^1.2.0",
     "drizzle-orm": "^0.40.0",
     "elysia": "latest",
+    "pg": "^8.13.3",
     "zod": "^3.24.2"
   },
   "devDependencies": {
