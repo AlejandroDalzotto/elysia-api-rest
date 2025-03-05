@@ -1,5 +1,5 @@
-import { InsertUser } from '@/db/schema/users.sql';
 import { UserRepository } from '@/repositories/user.repository';
+import type { InsertUser } from '@/db/schema/users.sql';
 
 export abstract class UserService {
   static async findAll() {
@@ -7,18 +7,23 @@ export abstract class UserService {
 
     return data
   }
-  static async findOneById(id: unknown) { }
+  static async findOneById(id: string) { }
+  static async findOneByEmail(email: string) {
+    const data = await UserRepository.getOneByEmail(email)
+
+    return data
+  }
   static async create(body: InsertUser) {
     const data = await UserRepository.save(body)
 
     return data
   }
-  static async update(id: unknown, body: Partial<unknown>) { }
-  static async remove(id: unknown) { }
+  static async update(id: string, body: InsertUser) { }
+  static async remove(id: string) { }
   static async existByEmail(email: string) {
 
     const data = await UserRepository.getOneByEmail(email)
 
-    return Boolean(data.email)
+    return Boolean(data && data?.email)
   }
 }

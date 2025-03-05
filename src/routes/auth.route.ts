@@ -46,7 +46,32 @@ export const authRoutes = new Elysia({ prefix: '/auth' })
   }, {
     body: 'signUp'
   })
-  .post('/sign-in', async () => {
+  .post('/sign-in', async ({ body, error, jwt }) => {
+
+    const { password, email } = body
+
+    const isEmailAlreadyTaken = await UserService.existByEmail(email)
+    if (!isEmailAlreadyTaken) {
+      return error(404, 'Invalid or missing email or password')
+    }
+
+    const userFromDb = await UserService.findOneByEmail(email)
+
+    const encryptedPassword = userFromDb.password
+    const isValid = await Bun.password.verify(password, encryptedPassword)
+
+    if (!isValid) {
+      return error(400, 'Invalid or missing email or password')
+    }
+
+    const token = await jwt.sign({ username: userFromDb.username })
+
+    return {
+      data: {
+        username: userFromDb.username
+      },
+      token
+    }
 
   }, {
     body: 'signIn'
