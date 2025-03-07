@@ -13,6 +13,11 @@ export abstract class UserService {
 
     return data
   }
+  static async findOneByUsername(username: string) {
+    const data = await UserRepository.getOneByUsername(username)
+
+    return data
+  }
   static async create(body: InsertUser) {
     const data = await UserRepository.save(body)
 

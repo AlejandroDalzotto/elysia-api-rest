@@ -20,6 +20,12 @@ export abstract class UserRepository {
     return data
   }
 
+  static async getOneByUsername(username: string) {
+    const [data] = await db.select().from(users).where(eq(users.username, username))
+
+    return data
+  }
+
   static async save(body: InsertUser) {
     const [data] = await db.insert(users).values(body).returning({ insertedId: users.id });
 

@@ -5,6 +5,7 @@ import { maxLengthUsername, minLengthEmail, minLengthPassword, minLengthUsername
 import { JWT_SECRET } from '@/config/env';
 import { db } from '@/db';
 import { users } from '@/db/schema/users.sql';
+import { authService } from '@/services/auth.service';
 
 const authModels = new Elysia({ name: 'models.auth' })
   .model({
@@ -21,12 +22,7 @@ const authModels = new Elysia({ name: 'models.auth' })
 
 export const authRoutes = new Elysia({ prefix: '/auth' })
   .use(authModels)
-  .use(
-    jwt({
-      name: 'jwt',
-      secret: JWT_SECRET
-    })
-  )
+  .use(authService)
   .put('/sign-up', async ({ body, error }) => {
 
     const { email, password, username } = body
@@ -46,7 +42,7 @@ export const authRoutes = new Elysia({ prefix: '/auth' })
   }, {
     body: 'signUp'
   })
-  .post('/sign-in', async ({ body, error, jwt }) => {
+  .post('/sign-in', async ({ body, error, jwt, cookie }) => {
 
     const { password, email } = body
 
@@ -64,13 +60,36 @@ export const authRoutes = new Elysia({ prefix: '/auth' })
       return error(400, 'Invalid or missing email or password')
     }
 
-    const token = await jwt.sign({ username: userFromDb.username })
+    const accessTokenValue = await jwt.sign({
+      sub: userFromDb.username,
+      expiresAt: Date.now() + 60 * 60 * 24 * 1000, // 1 day
+      issuedAt: Date.now()
+    })
+
+    const refreshTokenValue = await jwt.sign({
+      sub: userFromDb.username,
+      expiresAt: Date.now() + 60 * 60 * 24 * 7 * 1000, // 7 days
+      issuedAt: Date.now()
+    })
+
+    cookie.accessToken.set({
+      value: accessTokenValue,
+      httpOnly: true,
+      secure: true,
+    })
+
+    cookie.refreshToken.set({
+      value: refreshTokenValue,
+      httpOnly: true,
+      secure: true,
+    })
 
     return {
       data: {
         username: userFromDb.username
       },
-      token
+      accessToken: accessTokenValue,
+      refreshToken: refreshTokenValue
     }
 
   }, {
@@ -78,8 +97,10 @@ export const authRoutes = new Elysia({ prefix: '/auth' })
   })
   .get('/get-all', async () => {
     const usersData = await db.select().from(users)
-
     return {
       data: usersData
     }
+  }, {
+    auth: true,
+    role: 'admin',
   })
