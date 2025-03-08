@@ -1,5 +1,5 @@
 import { Elysia, t } from 'elysia';
-import { jwt, type JWTPayloadSpec } from '@elysiajs/jwt';
+import { jwt } from '@elysiajs/jwt';
 
 import { JWT_SECRET } from '@/config/env';
 import { UserService } from './user.service';
@@ -36,15 +36,15 @@ export const authService = new Elysia({ name: 'services.auth' })
       async resolve({ jwt, cookie: { accessToken, refreshToken }, error }) {
 
         if (!accessToken.value || !refreshToken.value) {
-          return error(401, 'Access token is missing');
+          return error(401, 'Either access or refresh token are missing');
         }
 
         const accessTokenPayload = await verifyToken(accessToken.value, 'access', { jwt });
         if ('message' in accessTokenPayload) return error(accessTokenPayload.code, accessTokenPayload.message);
 
         const now = Date.now();
-        if ('expiresAt' in accessTokenPayload && accessTokenPayload.expiresAt < now) {
-          console.log('❌ token expired');
+        if (accessTokenPayload.expiresAt < now) {
+          // ❌ token expired
 
           // We have to validate the type of the verification result, if we don't we won't have the typescript inference.
           const refreshTokenPayload = await verifyToken(refreshToken.value, 'refresh', { jwt });
