@@ -2,7 +2,8 @@ import { Elysia, t } from 'elysia';
 import { jwt } from '@elysiajs/jwt';
 
 import { JWT_SECRET } from '@/config/env';
-import { UserService } from './user.service';
+import { UserService } from '@/services/user.service';
+import type { Role } from '@/db/schema/users.sql';
 import { generateToken, verifyToken } from '@/utils/jwt';
 import { ACCESS_TOKEN_EXPIRATION_MILISECONDS, REFRESH_TOKEN_EXPIRATION_MILISECONDS } from '@/utils/consts';
 
@@ -73,13 +74,21 @@ export const authService = new Elysia({ name: 'services.auth' })
         return { user: user.username };
       }
     },
-    role(value: string | false) {
+    role(value: Role | false) {
 
       if (!value) return
 
       return {
         async beforeHandle({ jwt, cookie: { accessToken }, error }) {
-          // TODO: implement role verification logic here.
+
+          const payload = await jwt.verify(accessToken.value!)
+
+          if (!payload) return error(401, 'Access token is invalid')
+
+          const user = await UserService.findOneByUsername(payload.sub)
+          if (user.role !== value) {
+            return error(403, 'You don\'t have permissions to perform this action.')
+          }
         }
       }
     }
