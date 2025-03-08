@@ -1,8 +1,8 @@
-import { relations } from "drizzle-orm";
-import { integer, pgTable, text, varchar } from "drizzle-orm/pg-core";
-import { posts } from "./posts.sql";
-import { timestamps } from "./timestamps.helpers";
-import { users } from "./users.sql";
+import { relations } from 'drizzle-orm';
+import { integer, pgTable, text, varchar } from 'drizzle-orm/pg-core';
+import { posts } from '@/db/schema/posts.sql';
+import { timestamps } from '@/db/schema/timestamps.helpers';
+import { users } from '@/db/schema/users.sql';
 
 
 export const comments = pgTable('comments', {

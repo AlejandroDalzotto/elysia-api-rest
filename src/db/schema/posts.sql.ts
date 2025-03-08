@@ -1,6 +1,5 @@
 import { relations } from 'drizzle-orm';
 import { integer, pgTable, text, varchar } from 'drizzle-orm/pg-core';
-import { maxLengthUsername } from '@/utils/consts';
 import { timestamps } from '@/db/schema/timestamps.helpers';
 import { users } from '@/db/schema/users.sql';
 
