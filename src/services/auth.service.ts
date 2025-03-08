@@ -1,18 +1,25 @@
 import { Elysia, t } from 'elysia';
-import { jwt } from '@elysiajs/jwt';
+import { jwt, type JWTPayloadSpec } from '@elysiajs/jwt';
+
 import { JWT_SECRET } from '@/config/env';
 import { UserService } from './user.service';
+import { generateToken, verifyToken } from '@/utils/jwt';
+import { ACCESS_TOKEN_EXPIRATION_MILISECONDS, REFRESH_TOKEN_EXPIRATION_MILISECONDS } from '@/utils/consts';
+
+const jwtPayloadSchema = t.Object({
+  issuedAt: t.Number(),
+  sub: t.Any(),
+  expiresAt: t.Number()
+})
+
+export type JwtPayload = typeof jwtPayloadSchema.static
 
 export const authService = new Elysia({ name: 'services.auth' })
   .use(
     jwt({
       name: 'jwt',
       secret: JWT_SECRET,
-      schema: t.Object({
-        issuedAt: t.Number(),
-        sub: t.Any(),
-        expiresAt: t.Number()
-      })
+      schema: jwtPayloadSchema
     })
   )
   .guard({
@@ -28,75 +35,42 @@ export const authService = new Elysia({ name: 'services.auth' })
     auth: {
       async resolve({ jwt, cookie: { accessToken, refreshToken }, error }) {
 
-        if (!accessToken.value) {
-          return error(401, 'Access token is missing')
+        if (!accessToken.value || !refreshToken.value) {
+          return error(401, 'Access token is missing');
         }
 
-        const accessTokenPayload = await jwt.verify(accessToken.value)
+        const accessTokenPayload = await verifyToken(accessToken.value, 'access', { jwt });
+        if ('message' in accessTokenPayload) return error(accessTokenPayload.code, accessTokenPayload.message);
 
-        if (!accessTokenPayload) {
-          // handle error for access token is tempted or incorrect
-          return error(403, 'Access token\'s payload is invalid')
-        }
+        const now = Date.now();
+        if ('expiresAt' in accessTokenPayload && accessTokenPayload.expiresAt < now) {
+          console.log('❌ token expired');
 
-        const now = Date.now()
+          // We have to validate the type of the verification result, if we don't we won't have the typescript inference.
+          const refreshTokenPayload = await verifyToken(refreshToken.value, 'refresh', { jwt });
+          if ('message' in refreshTokenPayload) return error(refreshTokenPayload.code, refreshTokenPayload.message);
 
-        // Checks if token has expired.
-        if (accessTokenPayload.expiresAt < now) {
-          // We could refresh token here.
-          console.log('❌ token expired')
-
-          const refreshTokenPayload = await jwt.verify(refreshToken.value)
-
-          if (!refreshTokenPayload) {
-            // handle error for refresh token is tempted or incorrect
-            return error(403, 'Refresh token\'s payload is invalid')
-          }
-
-          const userRefreshToken = await UserService.findOneByUsername(refreshTokenPayload.sub)
-
+          const userRefreshToken = await UserService.findOneByUsername(refreshTokenPayload.sub);
           if (!userRefreshToken) {
-            return error(403, 'Refresh token is invalid')
+            return error(403, 'Refresh token is invalid');
           }
 
-          const newAccessToken = await jwt.sign({
-            sub: userRefreshToken.username,
-            expiresAt: Date.now() + 60 * 60 * 24 * 1000, // 1 day
-            issuedAt: now
-          })
+          // Sign new tokens to renew the older ones.
+          const newAccessToken = await generateToken(userRefreshToken.username, ACCESS_TOKEN_EXPIRATION_MILISECONDS, { jwt }); // 1 day
+          accessToken.set({ value: newAccessToken, httpOnly: true, secure: true });
 
-          accessToken.set({
-            value: newAccessToken,
-            httpOnly: true,
-            secure: true,
-          })
+          const newRefreshToken = await generateToken(userRefreshToken.username, REFRESH_TOKEN_EXPIRATION_MILISECONDS, { jwt }); // 7 days
+          refreshToken.set({ value: newRefreshToken, httpOnly: true, secure: true });
 
-          const newRefreshToken = await jwt.sign({
-            sub: userRefreshToken.username,
-            expiresAt: Date.now() + 60 * 60 * 24 * 7 * 1000, // 7 days
-            issuedAt: now
-          })
-
-          refreshToken.set({
-            value: newRefreshToken,
-            httpOnly: true,
-            secure: true,
-          })
-
-          return {
-            user: userRefreshToken.username
-          }
+          return { user: userRefreshToken.username };
         }
 
-        const user = await UserService.findOneByUsername(accessTokenPayload.sub)
-
+        const user = await UserService.findOneByUsername(accessTokenPayload.sub);
         if (!user) {
-          return error(403, 'Access token is invalid')
+          return error(403, 'Access token is invalid');
         }
 
-        return {
-          user: user.username
-        }
+        return { user: user.username };
       }
     },
     role(value: string | false) {
