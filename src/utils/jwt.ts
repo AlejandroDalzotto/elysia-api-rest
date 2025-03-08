@@ -1,12 +1,6 @@
-import { type InferContext, t } from 'elysia';
-import { authService, type JwtPayload } from '@/services/auth.service';
-
-const errorSchema = t.Object({
-  code: t.Number(),
-  message: t.String(),
-})
-
-export type ErrorMessage = typeof errorSchema.static
+import { type InferContext } from 'elysia';
+import { authService } from '@/services/auth.service';
+import type { ErrorMessage, JwtPayload } from '@/types';
 
 export async function verifyToken(
   token: string,

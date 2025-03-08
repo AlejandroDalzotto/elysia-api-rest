@@ -1,19 +1,11 @@
-import { Elysia, t } from 'elysia';
+import { Elysia } from 'elysia';
 import { jwt } from '@elysiajs/jwt';
-
 import { JWT_SECRET } from '@/config/env';
 import { UserService } from '@/services/user.service';
-import type { Role } from '@/db/schema/users.sql';
 import { generateToken, verifyToken } from '@/utils/jwt';
 import { ACCESS_TOKEN_EXPIRATION_MILISECONDS, REFRESH_TOKEN_EXPIRATION_MILISECONDS } from '@/utils/consts';
-
-const jwtPayloadSchema = t.Object({
-  issuedAt: t.Number(),
-  sub: t.Any(),
-  expiresAt: t.Number()
-})
-
-export type JwtPayload = typeof jwtPayloadSchema.static
+import { jwtPayloadSchema } from '@/elysia-schemas';
+import type { Role } from '@/db/schema/users.sql';
 
 export const authService = new Elysia({ name: 'services.auth' })
   .use(
@@ -23,15 +15,6 @@ export const authService = new Elysia({ name: 'services.auth' })
       schema: jwtPayloadSchema
     })
   )
-  .guard({
-    cookie: t.Cookie({
-      accessToken: t.Optional(t.String()),
-      refreshToken: t.Optional(t.String())
-    }, {
-      httpOnly: true,
-      secure: true,
-    })
-  })
   .macro({
     auth: {
       async resolve({ jwt, cookie: { accessToken, refreshToken }, error }) {
