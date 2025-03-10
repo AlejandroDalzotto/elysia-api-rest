@@ -7,11 +7,11 @@ import { authService } from '@/services/auth.service';
 
 const authModels = new Elysia({ name: 'models.auth' })
   .model({
-    signIn: t.Object({
+    'auth.signin.body.req': t.Object({
       email: t.String({ format: 'email', minLength: minLengthEmail }),
       password: t.String({ minLength: minLengthPassword })
     }),
-    signUp: t.Object({
+    'auth.signup.body.req': t.Object({
       email: t.String({ format: 'email' }),
       password: t.String({ minLength: minLengthPassword }),
       username: t.String({ minLength: minLengthUsername, maxLength: maxLengthUsername })
@@ -38,7 +38,7 @@ export const authRoutes = new Elysia({ prefix: '/auth' })
       data: user
     }
   }, {
-    body: 'signUp'
+    body: 'auth.signup.body.req'
   })
   .post('/sign-in', async ({ body, error, jwt, cookie }) => {
 
@@ -91,7 +91,7 @@ export const authRoutes = new Elysia({ prefix: '/auth' })
     }
 
   }, {
-    body: 'signIn'
+    body: 'auth.signin.body.req'
   })
   .get('/get-all', async () => {
     const usersData = await db.select().from(users)
