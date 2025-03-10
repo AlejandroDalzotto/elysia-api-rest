@@ -1,4 +1,4 @@
-
+// Min and max contraints for entities' properties
 export const minLengthPassword = 6
 
 export const minLengthUsername = 3
@@ -12,5 +12,9 @@ export const maxLengthPostTitle = 250
 export const minLengthCommentText = 1
 export const maxLengthCommentText = 400
 
+// JWT
 export const ACCESS_TOKEN_EXPIRATION_MILISECONDS = 60 * 60 * 24 * 1000 // 1 day
 export const REFRESH_TOKEN_EXPIRATION_MILISECONDS = 60 * 60 * 24 * 7 * 1000 // 7 days
+
+// Search filters
+export const MAX_ITEMS_PER_PAGE = 10
