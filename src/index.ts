@@ -2,11 +2,16 @@ import { Elysia } from 'elysia';
 import { swagger } from '@elysiajs/swagger';
 import { authRoutes } from '@/routes/auth.route';
 import { PORT } from '@/config/env';
+import { postsRoutes } from './routes/post.route';
 
 const app = new Elysia({ prefix: '/api' })
   .onError(({ code, path, error }) => {
 
-    console.error(`error [${code}] on [${path}] ${error}`)
+    if (code === 'VALIDATION') {
+      console.error(`error [${code}] on [${path}] ${error.all[0].summary}`)
+    } else {
+      console.error(`error [${code}] on [${path}] ${error}`)
+    }
 
   })
   .use(swagger({
@@ -15,6 +20,7 @@ const app = new Elysia({ prefix: '/api' })
     exclude: ['/api/docs', '/api/docs/json']
   }))
   .use(authRoutes)
+  .use(postsRoutes)
   .listen(PORT);
 
 console.log(
