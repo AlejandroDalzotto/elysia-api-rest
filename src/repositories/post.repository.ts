@@ -1,5 +1,5 @@
 import { db } from '@/db';
-import { type InsertPost, posts } from '@/db/schema/posts.sql';
+import { type InsertPost, posts, type UpdatePost } from '@/db/schema/posts.sql';
 import { MAX_ITEMS_PER_PAGE } from '@/utils/consts';
 import { and, eq, ilike, type SQL } from 'drizzle-orm';
 
@@ -53,6 +53,19 @@ export abstract class PostRepository {
       return data;
     } catch (error) {
       console.error(`Error saving post in database:`, error);
+      throw error;
+    }
+  }
+
+  static async update({ body, title }: UpdatePost, id: number) {
+
+    const now = new Date()
+
+    try {
+      const [data] = await db.update(posts).set({ body, title, updatedAt: now }).where(eq(posts.id, id)).returning()
+      return data;
+    } catch (error) {
+      console.error(`Error updating post ${id} in database:`, error);
       throw error;
     }
   }

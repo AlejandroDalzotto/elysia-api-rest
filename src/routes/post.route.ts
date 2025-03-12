@@ -71,3 +71,21 @@ export const postsRoutes = new Elysia({ prefix: '/posts' })
     auth: true,
     body: 'posts.create.body.req'
   })
+  .patch('/:id', async ({ body, userId, error, params: { id } }) => {
+
+    if (userId !== body.authorId) {
+      return error(403, 'Users cannot create posts on behalf of anothers.')
+    }
+
+    const postCreated = await PostService.update(body, id)
+
+    return {
+      data: postCreated
+    }
+  }, {
+    auth: true,
+    body: 'posts.update.body.req',
+    params: t.Object({
+      id: t.Number()
+    })
+  })

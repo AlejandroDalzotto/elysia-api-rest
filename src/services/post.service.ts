@@ -28,4 +28,10 @@ export abstract class PostService {
     return data
   }
 
+  static async update(body: Partial<InsertPost>, id: number) {
+    const data = await PostRepository.update(body, id)
+
+    return data
+  }
+
 }
