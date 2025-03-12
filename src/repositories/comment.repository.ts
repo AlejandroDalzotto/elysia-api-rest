@@ -17,4 +17,16 @@ export abstract class CommentRepository {
     }
   }
 
+  static async save(body: string, postId: number, authorId: string) {
+
+    try {
+      const [data] = await db.insert(comments).values({ body, authorId, postId }).returning()
+
+      return data;
+    } catch (error) {
+      console.error(`Error saving comment in post ${postId}:`, error);
+      throw error;
+    }
+  }
+
 }

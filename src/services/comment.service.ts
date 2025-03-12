@@ -8,11 +8,23 @@ export abstract class CommentService {
   static async findAll(postId: number, limit: number = MAX_ITEMS_PER_PAGE, offset: number = 0) {
     const post = await PostRepository.getById(postId)
 
-    if(!post.id) {
+    if(!post) {
       throw new NotFoundError(`Post ${postId} not found. Please provide a correct id.`)
     }
 
     const data = CommentRepository.getAll(postId, limit, offset)
+
+    return data
+  }
+
+  static async create(body: string, postId: number, authorId: string) {
+    const post = await PostRepository.getById(postId)
+
+    if(!post) {
+      throw new NotFoundError(`Post ${postId} not found. Please provide a correct id.`)
+    }
+
+    const data = CommentRepository.save(body, postId, authorId)
 
     return data
   }

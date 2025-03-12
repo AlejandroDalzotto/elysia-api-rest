@@ -5,11 +5,11 @@ import Elysia, { t } from 'elysia';
 const commentModels = new Elysia({ name: 'models.comments' })
   .model({
     'comments.create.body.req': t.Object({
-      title: t.String(),
+      postId: t.Number(),
       body: t.String(),
       authorId: t.String()
     }),
-    'posts.update.body.req': t.Object({
+    'comments.update.body.req': t.Object({
       title: t.Optional(t.String()),
       body: t.Optional(t.String()),
       authorId: t.String()
@@ -30,4 +30,20 @@ export const commentsRoutes = new Elysia({ prefix: '/comments' })
     params: t.Object({
       postId: t.Number()
     })
+  })
+  .put('/', async ({ body, userId, error }) => {
+    const { authorId, body: content, postId } = body
+
+    if (userId !== authorId) {
+      return error(403, 'Users cannot create comments on behalf of anothers.')
+    }
+
+    const commentCreated = await CommentService.create(content, postId, authorId)
+
+    return {
+      data: commentCreated
+    }
+  }, {
+    auth: true,
+    body: 'comments.create.body.req'
   })

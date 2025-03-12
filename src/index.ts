@@ -3,6 +3,7 @@ import { swagger } from '@elysiajs/swagger';
 import { authRoutes } from '@/routes/auth.route';
 import { PORT } from '@/config/env';
 import { postsRoutes } from './routes/post.route';
+import { commentsRoutes } from './routes/comment.route';
 
 const app = new Elysia({ prefix: '/api' })
   .onError(({ code, path, error }) => {
@@ -21,6 +22,7 @@ const app = new Elysia({ prefix: '/api' })
   }))
   .use(authRoutes)
   .use(postsRoutes)
+  .use(commentsRoutes)
   .listen(PORT);
 
 console.log(
