@@ -34,4 +34,10 @@ export abstract class PostService {
     return data
   }
 
+  static async remove(id: number) {
+    const data = await PostRepository.remove(id)
+
+    return data
+  }
+
 }

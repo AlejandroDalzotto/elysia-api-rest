@@ -74,7 +74,7 @@ export const postsRoutes = new Elysia({ prefix: '/posts' })
   .patch('/:id', async ({ body, userId, error, params: { id } }) => {
 
     if (userId !== body.authorId) {
-      return error(403, 'Users cannot create posts on behalf of anothers.')
+      return error(403, 'Users cannot modify posts on behalf of anothers.')
     }
 
     const postCreated = await PostService.update(body, id)
@@ -85,6 +85,25 @@ export const postsRoutes = new Elysia({ prefix: '/posts' })
   }, {
     auth: true,
     body: 'posts.update.body.req',
+    params: t.Object({
+      id: t.Number()
+    })
+  })
+  .delete('/:id', async ({ userId, error, params: { id } }) => {
+
+    const post = await PostService.findById(id)
+
+    if (userId !== post.authorId) {
+      return error(403, 'Users cannot delete posts on behalf of anothers.')
+    }
+
+    const data = await PostService.remove(id)
+
+    return {
+      data
+    }
+  }, {
+    auth: true,
     params: t.Object({
       id: t.Number()
     })

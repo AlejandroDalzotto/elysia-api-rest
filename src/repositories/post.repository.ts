@@ -70,4 +70,14 @@ export abstract class PostRepository {
     }
   }
 
+  static async remove(id: number) {
+    try {
+      const [data] = await db.delete(posts).where(eq(posts.id, id)).returning({ deletedId: posts.id })
+      return data;
+    } catch (error) {
+      console.error(`Error updating post ${id} in database:`, error);
+      throw error;
+    }
+  }
+
 }
