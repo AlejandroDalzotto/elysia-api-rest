@@ -18,6 +18,7 @@ const postModels = new Elysia({ name: 'models.posts' })
       t.Object({
         limit: t.Number(),
         offset: t.Number(),
+        term: t.String(),
       })
     )
   })
@@ -25,7 +26,15 @@ const postModels = new Elysia({ name: 'models.posts' })
 export const postsRoutes = new Elysia({ prefix: '/posts' })
   .use(authService)
   .use(postModels)
-  .get('/', async ({ query: { limit, offset } }) => {
+  .get('/', async ({ query: { limit, offset, term } }) => {
+
+    if (term) {
+      const postsFilteredByTerm = await PostService.findAllByTerm(term, limit, offset)
+
+      return {
+        data: postsFilteredByTerm
+      }
+    }
 
     const posts = await PostService.findAll(limit, offset)
 
@@ -33,6 +42,32 @@ export const postsRoutes = new Elysia({ prefix: '/posts' })
       data: posts
     }
   }, {
-    auth: true,
     query: 'posts.get.query.req'
+  })
+  .get('/:id', async ({ params: { id } }) => {
+
+    const post = await PostService.findById(id)
+
+    return {
+      data: post
+    }
+  }, {
+    params: t.Object({
+      id: t.Number()
+    })
+  })
+  .put('/', async ({ body, userId, error }) => {
+
+    if (userId !== body.authorId) {
+      return error(403, 'Users cannot create posts on behalf of anothers.')
+    }
+
+    const postCreated = await PostService.create(body)
+
+    return {
+      data: postCreated
+    }
+  }, {
+    auth: true,
+    body: 'posts.create.body.req'
   })

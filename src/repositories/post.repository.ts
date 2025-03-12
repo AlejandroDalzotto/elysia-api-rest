@@ -1,7 +1,7 @@
 import { db } from '@/db';
-import { posts } from '@/db/schema/posts.sql';
+import { type InsertPost, posts } from '@/db/schema/posts.sql';
 import { MAX_ITEMS_PER_PAGE } from '@/utils/consts';
-import { and, ilike, type SQL } from 'drizzle-orm';
+import { and, eq, ilike, type SQL } from 'drizzle-orm';
 
 type Filters = {
   term?: string
@@ -31,6 +31,28 @@ export abstract class PostRepository {
       return data;
     } catch (error) {
       console.error('Error fetching all posts:', error);
+      throw error;
+    }
+  }
+
+  static async getById(id: number) {
+
+    try {
+      const [data] = await db.select().from(posts).where(eq(posts.id, id));
+      return data;
+    } catch (error) {
+      console.error(`Error fetching post ${id}:`, error);
+      throw error;
+    }
+  }
+
+  static async save(body: InsertPost) {
+
+    try {
+      const [data] = await db.insert(posts).values(body).returning();
+      return data;
+    } catch (error) {
+      console.error(`Error saving post in database:`, error);
       throw error;
     }
   }

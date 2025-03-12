@@ -46,7 +46,7 @@ export const authService = new Elysia({ name: 'services.auth' })
           const newRefreshToken = await generateToken(userRefreshToken.username, REFRESH_TOKEN_EXPIRATION_MILISECONDS, { jwt }); // 7 days
           refreshToken.set({ value: newRefreshToken, httpOnly: true, secure: true });
 
-          return { user: userRefreshToken.username };
+          return { userId: userRefreshToken.id };
         }
 
         const user = await UserService.findOneByUsername(accessTokenPayload.sub);
@@ -54,7 +54,7 @@ export const authService = new Elysia({ name: 'services.auth' })
           return error(403, 'Access token is invalid');
         }
 
-        return { user: user.username };
+        return { userId: user.id };
       }
     },
     role(value: Role | false) {
