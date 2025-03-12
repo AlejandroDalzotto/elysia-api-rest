@@ -84,7 +84,7 @@ export const authRoutes = new Elysia({ prefix: '/auth' })
 
     return {
       data: {
-        username: userFromDb.username
+        id: userFromDb.id
       },
       accessToken: accessTokenValue,
       refreshToken: refreshTokenValue
