@@ -8,13 +8,31 @@ import { authService } from '@/services/auth.service';
 const authModels = new Elysia({ name: 'models.auth' })
   .model({
     'auth.signin.body.req': t.Object({
-      email: t.String({ format: 'email', minLength: minLengthEmail }),
-      password: t.String({ minLength: minLengthPassword })
+      email: t.String({
+        format: 'email',
+        minLength: minLengthEmail,
+        description: 'Email of the user (at least 3 characters)'
+      }),
+      password: t.String({
+        minLength: minLengthPassword,
+        description: 'Password of the user (at least 6 characters)'
+      })
     }),
     'auth.signup.body.req': t.Object({
-      email: t.String({ format: 'email' }),
-      password: t.String({ minLength: minLengthPassword }),
-      username: t.String({ minLength: minLengthUsername, maxLength: maxLengthUsername })
+      email: t.String({
+        format: 'email',
+        minLength: minLengthEmail,
+        description: 'Email of the user (at least 3 characters)'
+      }),
+      password: t.String({
+        minLength: minLengthPassword,
+        description: 'Password of the user (at least 6 characters)'
+      }),
+      username: t.String({
+        minLength: minLengthUsername,
+        maxLength: maxLengthUsername,
+        description: 'Username of the user (at least 3 characters)'
+      })
     }),
   })
 
@@ -38,7 +56,11 @@ export const authRoutes = new Elysia({ prefix: '/auth' })
       data: user
     }
   }, {
-    body: 'auth.signup.body.req'
+    body: 'auth.signup.body.req',
+    detail: {
+      tags: ['authentication'],
+      summary: 'Create a new user',
+    }
   })
   .post('/sign-in', async ({ body, error, jwt, cookie }) => {
 
@@ -91,7 +113,11 @@ export const authRoutes = new Elysia({ prefix: '/auth' })
     }
 
   }, {
-    body: 'auth.signin.body.req'
+    body: 'auth.signin.body.req',
+    detail: {
+      tags: ['authentication'],
+      summary: 'Sign in a user',
+    }
   })
   .get('/get-all', async () => {
     const usersData = await db.select().from(users)
@@ -101,4 +127,9 @@ export const authRoutes = new Elysia({ prefix: '/auth' })
   }, {
     auth: true,
     role: 'admin',
+    detail: {
+      tags: ['users'],
+      summary: 'Get all users (admin only)',
+      description: 'This route is only available for admin users and it\'s for testing purposes only.'
+    }
   })
