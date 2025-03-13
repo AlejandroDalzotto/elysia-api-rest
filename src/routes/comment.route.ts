@@ -47,3 +47,23 @@ export const commentsRoutes = new Elysia({ prefix: '/comments' })
     auth: true,
     body: 'comments.create.body.req'
   })
+  .patch('/like/:id', async ({ params: { id }, userId }) => {
+
+    await CommentService.updateLikes(id, userId, true)
+
+  }, {
+    auth: true,
+    params: t.Object({
+      id: t.Number()
+    })
+  })
+  .patch('/dislike/:id', async ({ params: { id }, userId }) => {
+
+    await CommentService.updateLikes(id, userId, false)
+
+  }, {
+    auth: true,
+    params: t.Object({
+      id: t.Number()
+    })
+  })

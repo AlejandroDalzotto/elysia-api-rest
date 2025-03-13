@@ -1,7 +1,8 @@
 import { db } from '@/db';
 import { comments } from '@/db/schema/comments.sql';
+import { likes } from '@/db/schema/likes.sql';
 import { MAX_ITEMS_PER_PAGE } from '@/utils/consts';
-import { eq } from 'drizzle-orm';
+import { and, eq } from 'drizzle-orm';
 
 export abstract class CommentRepository {
 
@@ -13,6 +14,59 @@ export abstract class CommentRepository {
       return data;
     } catch (error) {
       console.error(`Error fetching all comments from post ${postId}:`, error);
+      throw error;
+    }
+  }
+
+  static async getById(commentId: number) {
+
+    try {
+      const [data] = await db.select().from(comments).where(eq(comments.id, commentId));
+
+      return data;
+    } catch (error) {
+      console.error(`Error fetching comment ${commentId}:`, error);
+      throw error;
+    }
+  }
+
+  static async getLike(commentId: number, userId: string) {
+
+    try {
+      const [existingLike] = await db.select().from(likes).where(and(
+        eq(likes.commentId, commentId),
+        eq(likes.userId, userId)
+      )).limit(1);
+
+      return existingLike
+    } catch (error) {
+      console.error(`Error fetching comment like in comment ${commentId}:`, error);
+      throw error;
+    }
+  }
+
+  static async increaseLikes(commentId: number, userId: string) {
+
+    try {
+      await db.insert(likes).values({
+        commentId,
+        userId
+      });
+    } catch (error) {
+      console.error(`Error fetching comment like in comment ${commentId}:`, error);
+      throw error;
+    }
+  }
+
+  static async decreaseLikes(commentId: number, userId: string) {
+
+    try {
+      await db.delete(likes).where(and(
+        eq(likes.commentId, commentId),
+        eq(likes.userId, userId)
+      ));
+    } catch (error) {
+      console.error(`Error fetching comment like in comment ${commentId}:`, error);
       throw error;
     }
   }

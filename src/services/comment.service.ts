@@ -8,7 +8,7 @@ export abstract class CommentService {
   static async findAll(postId: number, limit: number = MAX_ITEMS_PER_PAGE, offset: number = 0) {
     const post = await PostRepository.getById(postId)
 
-    if(!post) {
+    if (!post) {
       throw new NotFoundError(`Post ${postId} not found. Please provide a correct id.`)
     }
 
@@ -20,13 +20,33 @@ export abstract class CommentService {
   static async create(body: string, postId: number, authorId: string) {
     const post = await PostRepository.getById(postId)
 
-    if(!post) {
+    if (!post) {
       throw new NotFoundError(`Post ${postId} not found. Please provide a correct id.`)
     }
 
-    const data = CommentRepository.save(body, postId, authorId)
+    const data = await CommentRepository.save(body, postId, authorId)
 
     return data
+  }
+
+  static async updateLikes(commentId: number, userId: string, like: boolean) {
+    const comment = await CommentRepository.getById(commentId)
+
+    if(!comment) {
+      throw new NotFoundError(`Comment ${commentId} not found. Please provide a correct id.`)
+    }
+
+    const existingLike = await CommentRepository.getLike(commentId, userId)
+
+    if (like) {
+      if (!existingLike) {
+        await CommentRepository.increaseLikes(commentId, userId)
+      }
+    } else {
+      if (existingLike) {
+        await CommentRepository.decreaseLikes(commentId, userId)
+      }
+    }
   }
 
 }
