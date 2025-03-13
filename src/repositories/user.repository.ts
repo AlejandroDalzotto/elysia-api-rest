@@ -1,6 +1,7 @@
 import { eq } from 'drizzle-orm';
 import { db } from '@/db';
 import { type InsertUser, type SelectUser, users } from '@/db/schema/users.sql';
+import { handleDatabaseError } from '@/exceptions/helpers/database.error.handler';
 
 export abstract class UserRepository {
 
@@ -9,8 +10,7 @@ export abstract class UserRepository {
       const data = await db.select().from(users);
       return data;
     } catch (error) {
-      console.error('Error fetching all users:', error);
-      throw error;
+      handleDatabaseError(error, 'Error fetching all users in database');
     }
   }
 
@@ -19,8 +19,7 @@ export abstract class UserRepository {
       const [data] = await db.select().from(users).where(eq(users.id, id));
       return data;
     } catch (error) {
-      console.error(`Error fetching user by ID ${id}:`, error);
-      throw error;
+      handleDatabaseError(error, `Error fetching user by ID ${id}`);
     }
   }
 
@@ -29,8 +28,7 @@ export abstract class UserRepository {
       const [data] = await db.select().from(users).where(eq(users.email, email));
       return data;
     } catch (error) {
-      console.error(`Error fetching user by email ${email}:`, error);
-      throw error;
+      handleDatabaseError(error, `Error fetching user by email ${email}`);
     }
   }
 
@@ -39,8 +37,7 @@ export abstract class UserRepository {
       const [data] = await db.select().from(users).where(eq(users.username, username));
       return data;
     } catch (error) {
-      console.error(`Error fetching user by username ${username}:`, error);
-      throw error;
+      handleDatabaseError(error, `Error fetching user by username ${username}`);
     }
   }
 
@@ -49,8 +46,7 @@ export abstract class UserRepository {
       const [data] = await db.insert(users).values(body).returning({ insertedId: users.id });
       return data;
     } catch (error) {
-      console.error('Error saving user:', error);
-      throw error;
+      handleDatabaseError(error, 'Error saving user');
     }
   }
 
@@ -59,8 +55,7 @@ export abstract class UserRepository {
       const [data] = await db.update(users).set(body).where(eq(users.id, id)).returning({ updatedId: users.id });
       return data;
     } catch (error) {
-      console.error(`Error updating user with ID ${id}:`, error);
-      throw error;
+      handleDatabaseError(error, `Error updating user with ID ${id}`);
     }
   }
 
@@ -69,8 +64,7 @@ export abstract class UserRepository {
       const [data] = await db.delete(users).where(eq(users.id, id)).returning({ deletedId: users.id });
       return data;
     } catch (error) {
-      console.error(`Error removing user with ID ${id}:`, error);
-      throw error;
+      handleDatabaseError(error, `Error removing user with ID ${id}`);
     }
   }
 

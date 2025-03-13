@@ -1,6 +1,7 @@
 import { PostRepository } from '@/repositories/post.repository';
 import { MAX_ITEMS_PER_PAGE } from '@/utils/consts';
 import type { InsertPost } from '@/db/schema/posts.sql';
+import { NotFoundError } from 'elysia';
 
 export abstract class PostService {
 
@@ -17,9 +18,13 @@ export abstract class PostService {
   }
 
   static async findById(id: number) {
-    const data = await PostRepository.getById(id)
+    const post = await PostRepository.getById(id)
 
-    return data
+    if (!post) {
+      throw new NotFoundError(`Post ${id} not found, please provide a valid id.`)
+    }
+
+    return post
   }
 
   static async create(body: InsertPost) {

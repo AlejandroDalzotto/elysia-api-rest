@@ -4,17 +4,10 @@ import { authRoutes } from '@/routes/auth.route';
 import { PORT } from '@/config/env';
 import { postsRoutes } from './routes/post.route';
 import { commentsRoutes } from './routes/comment.route';
+import { globalErrorHandler } from '@/exceptions';
 
 const app = new Elysia({ prefix: '/api' })
-  .onError(({ code, path, error }) => {
-
-    if (code === 'VALIDATION') {
-      console.error(`error [${code}] on [${path}] ${error.all[0].summary}`)
-    } else {
-      console.error(`error [${code}] on [${path}] ${error}`)
-    }
-
-  })
+  .use(globalErrorHandler)
   .use(swagger({
     autoDarkMode: true,
     path: '/docs',

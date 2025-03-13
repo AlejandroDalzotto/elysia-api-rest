@@ -1,18 +1,19 @@
-import { type InferContext } from 'elysia';
+import type { InferContext } from 'elysia';
+import type { JwtPayload } from '@/types';
 import { authService } from '@/services/auth.service';
-import type { ErrorMessage, JwtPayload } from '@/types';
+import { InvalidJwtError } from '@/exceptions/invalidjwt.error';
 
 export async function verifyToken(
   token: string,
   tokenType: 'access' | 'refresh',
   { jwt }: Pick<InferContext<typeof authService>, | 'jwt'>
-): Promise<JwtPayload | ErrorMessage> {
+): Promise<JwtPayload> {
   const payload = await jwt.verify(token);
   if (!payload) {
-    return {
-      code: 403,
-      message: `${tokenType} token's payload is invalid`
-    }
+    throw new InvalidJwtError(`Failed to verify ${tokenType} token`, {
+      status: 403,
+      detail: `${tokenType} token is invalid`
+    });
   }
   return payload;
 }

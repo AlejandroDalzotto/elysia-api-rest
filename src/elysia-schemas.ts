@@ -5,8 +5,3 @@ export const jwtPayloadSchema = t.Object({
   sub: t.Any(),
   expiresAt: t.Number()
 })
-
-export const errorSchema = t.Object({
-  code: t.Number(),
-  message: t.String(),
-})

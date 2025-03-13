@@ -6,6 +6,9 @@ import { generateToken, verifyToken } from '@/utils/jwt';
 import { ACCESS_TOKEN_EXPIRATION_MILISECONDS, REFRESH_TOKEN_EXPIRATION_MILISECONDS } from '@/utils/consts';
 import { jwtPayloadSchema } from '@/elysia-schemas';
 import type { Role } from '@/db/schema/users.sql';
+import { InvalidJwtError } from '@/exceptions/invalidjwt.error';
+import { JwtNotProvidedError } from '@/exceptions/jwtnotprovided.error';
+import { InvalidRoleError } from '@/exceptions/invalidrole.error';
 
 export const authService = new Elysia({ name: 'services.auth' })
   .use(
@@ -17,14 +20,13 @@ export const authService = new Elysia({ name: 'services.auth' })
   )
   .macro({
     auth: {
-      async resolve({ jwt, cookie: { accessToken, refreshToken }, error }) {
+      async resolve({ jwt, cookie: { accessToken, refreshToken } }) {
 
         if (!accessToken.value || !refreshToken.value) {
-          return error(401, 'Either access or refresh token are missing');
+          throw new JwtNotProvidedError('Either access or refresh token are missing', { status: 403, detail: 'Token is missing, please make sure to provide both access and refresh tokens' });
         }
 
         const accessTokenPayload = await verifyToken(accessToken.value, 'access', { jwt });
-        if ('message' in accessTokenPayload) return error(accessTokenPayload.code, accessTokenPayload.message);
 
         const now = Date.now();
         if (accessTokenPayload.expiresAt < now) {
@@ -32,11 +34,10 @@ export const authService = new Elysia({ name: 'services.auth' })
 
           // We have to validate the type of the verification result, if we don't we won't have the typescript inference.
           const refreshTokenPayload = await verifyToken(refreshToken.value, 'refresh', { jwt });
-          if ('message' in refreshTokenPayload) return error(refreshTokenPayload.code, refreshTokenPayload.message);
 
           const userRefreshToken = await UserService.findOneByUsername(refreshTokenPayload.sub);
           if (!userRefreshToken) {
-            return error(403, 'Refresh token is invalid');
+            throw new InvalidJwtError('Refresh token is invalid', { status: 403, detail: 'The integrity of the token might be affected' });
           }
 
           // Sign new tokens to renew the older ones.
@@ -51,7 +52,7 @@ export const authService = new Elysia({ name: 'services.auth' })
 
         const user = await UserService.findOneByUsername(accessTokenPayload.sub);
         if (!user) {
-          return error(403, 'Access token is invalid');
+          throw new InvalidJwtError('Acess token is invalid', { status: 403, detail: 'The integrity of the token might be affected' });
         }
 
         return { userId: user.id };
@@ -62,15 +63,15 @@ export const authService = new Elysia({ name: 'services.auth' })
       if (!value) return
 
       return {
-        async beforeHandle({ jwt, cookie: { accessToken }, error }) {
+        async beforeHandle({ jwt, cookie: { accessToken } }) {
 
           const payload = await jwt.verify(accessToken.value!)
 
-          if (!payload) return error(401, 'Access token is invalid')
+          if (!payload) throw new JwtNotProvidedError('Access token is invalid', { status: 401, detail: 'Please provide a valid access token' })
 
           const user = await UserService.findOneByUsername(payload.sub)
           if (user.role !== value) {
-            return error(403, 'You don\'t have permissions to perform this action.')
+            throw new InvalidRoleError('Unathorized action for user', { status: 403, detail: 'You don\'t have permissions to perform this action' })
           }
         }
       }
