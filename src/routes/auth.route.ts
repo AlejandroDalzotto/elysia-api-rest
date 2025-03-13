@@ -1,56 +1,17 @@
-import { Elysia, t } from 'elysia';
+import { Elysia } from 'elysia';
 import { UserService } from '@/services/user.service';
-import { maxLengthUsername, minLengthEmail, minLengthPassword, minLengthUsername } from '@/utils/consts';
-import { db } from '@/db';
-import { users } from '@/db/schema/users.sql';
 import { authService } from '@/services/auth.service';
-
-const authModels = new Elysia({ name: 'models.auth' })
-  .model({
-    'auth.signin.body.req': t.Object({
-      email: t.String({
-        format: 'email',
-        minLength: minLengthEmail,
-        description: 'Email of the user (at least 3 characters)'
-      }),
-      password: t.String({
-        minLength: minLengthPassword,
-        description: 'Password of the user (at least 6 characters)'
-      })
-    }),
-    'auth.signup.body.req': t.Object({
-      email: t.String({
-        format: 'email',
-        minLength: minLengthEmail,
-        description: 'Email of the user (at least 3 characters)'
-      }),
-      password: t.String({
-        minLength: minLengthPassword,
-        description: 'Password of the user (at least 6 characters)'
-      }),
-      username: t.String({
-        minLength: minLengthUsername,
-        maxLength: maxLengthUsername,
-        description: 'Username of the user (at least 3 characters)'
-      })
-    }),
-  })
+import { authModels } from '@/models/auth';
+import { generateToken } from '@/utils/jwt';
 
 export const authRoutes = new Elysia({ prefix: '/auth' })
   .use(authModels)
   .use(authService)
-  .put('/sign-up', async ({ body, error }) => {
+  .put('/sign-up', async ({ body }) => {
 
     const { email, password, username } = body
 
-    const isEmailAlreadyTaken = await UserService.existByEmail(email)
-    if (isEmailAlreadyTaken) {
-      return error(400, `Email ${email} is already taken, please provide another.`)
-    }
-
-    const encryptedPassword = await Bun.password.hash(password)
-
-    const user = await UserService.create({ email, password: encryptedPassword, username })
+    const user = await UserService.create({ email, password, username })
 
     return {
       data: user
@@ -62,35 +23,17 @@ export const authRoutes = new Elysia({ prefix: '/auth' })
       summary: 'Create a new user',
     }
   })
-  .post('/sign-in', async ({ body, error, jwt, cookie }) => {
+  .post('/sign-in', async ({ body, jwt, cookie }) => {
 
     const { password, email } = body
 
-    const isEmailAlreadyTaken = await UserService.existByEmail(email)
-    if (!isEmailAlreadyTaken) {
-      return error(404, 'Invalid or missing email or password')
-    }
+    const data = await UserService.validateCredentials(email, password)
 
-    const userFromDb = await UserService.findOneByEmail(email)
+    const accessTokenExpirationDate = Date.now() + 60 * 60 * 24 * 1000 // 1 day
+    const refreshTokenExpirationDate = Date.now() + 60 * 60 * 24 * 7 * 1000 // 7 days
 
-    const encryptedPassword = userFromDb.password
-    const isValid = await Bun.password.verify(password, encryptedPassword)
-
-    if (!isValid) {
-      return error(400, 'Invalid or missing email or password')
-    }
-
-    const accessTokenValue = await jwt.sign({
-      sub: userFromDb.username,
-      expiresAt: Date.now() + 60 * 60 * 24 * 1000, // 1 day
-      issuedAt: Date.now()
-    })
-
-    const refreshTokenValue = await jwt.sign({
-      sub: userFromDb.username,
-      expiresAt: Date.now() + 60 * 60 * 24 * 7 * 1000, // 7 days
-      issuedAt: Date.now()
-    })
+    const accessTokenValue = await generateToken(data.username, accessTokenExpirationDate, { jwt })
+    const refreshTokenValue = await generateToken(data.username, refreshTokenExpirationDate, { jwt })
 
     cookie.accessToken.set({
       value: accessTokenValue,
@@ -106,7 +49,7 @@ export const authRoutes = new Elysia({ prefix: '/auth' })
 
     return {
       data: {
-        id: userFromDb.id
+        id: data.id
       },
       accessToken: accessTokenValue,
       refreshToken: refreshTokenValue
@@ -120,7 +63,7 @@ export const authRoutes = new Elysia({ prefix: '/auth' })
     }
   })
   .get('/get-all', async () => {
-    const usersData = await db.select().from(users)
+    const usersData = await UserService.findAll()
     return {
       data: usersData
     }
