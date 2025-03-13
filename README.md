@@ -27,14 +27,14 @@ bun run dev
 
 To connect to the database you have to set all the environment variables needed:
 
-- `PORT`: type string, default '3000'.
-- `JWT_SECRET`: type string, minimum length 16 characters.
-- `NODE_ENV`: type enum 'development' or 'production', default 'development' .
-- `DB_NAME`: type string.
-- `DB_USER`: type string, default 'postgres'.
-- `DB_PASSWORD`: type string.
-- `DB_HOST`: type string, default 'localhost'.
-- `DB_PORT`: type string, default '5432'.
+- `PORT`: the port where the server will be running.
+- `JWT_SECRET`: the secret to sign the JWT tokens.
+- `NODE_ENV`: the environment where the server is running. By default is 'development'.
+- `DB_NAME`: the name of the database.
+- `DB_USER`: the user to connect to the database. By default is 'postgres'.
+- `DB_PASSWORD`: the password to connect to the database.
+- `DB_HOST`: the host where the database is running. By default is 'localhost'.
+- `DB_PORT`: the port where the database is running. By default is '5432'.
 
 ## Documentation
 
