@@ -5,6 +5,7 @@ import { AuthorizationError } from '@/exceptions/authorization.error';
 import { JwtNotProvidedError } from '@/exceptions/jwtnotprovided.error';
 import type { OnErrorResponse } from '@/types';
 import { AuthenticationError } from '@/exceptions/authentication.error';
+import { UniqueConstraintError } from '@/exceptions/uniqueconstrainterror.error';
 
 const errorHandlers: Record<string, (error: any, path: string) => OnErrorResponse> = {
   'APP_DATABASE': (error, path) => ({
@@ -49,6 +50,18 @@ const errorHandlers: Record<string, (error: any, path: string) => OnErrorRespons
     detail: error.cause?.detail,
     path,
   }),
+  'AUTHENTICATION': (error, path) => ({
+    code: 400,
+    message: error.message,
+    detail: error.cause?.detail,
+    path,
+  }),
+  'UNIQUE_CONSTRAINT': (error, path) => ({
+    code: 409,
+    message: error.message,
+    detail: error.cause?.detail,
+    path,
+  }),
 };
 
 export const globalErrorHandler = new Elysia({ name: 'errors.handler' })
@@ -57,6 +70,7 @@ export const globalErrorHandler = new Elysia({ name: 'errors.handler' })
   .error('INVALID_ROLE', AuthorizationError)
   .error('JWT_NOT_PROVIDED', JwtNotProvidedError)
   .error('AUTHENTICATION', AuthenticationError)
+  .error('UNIQUE_CONSTRAINT', UniqueConstraintError)
   .onError({ as: 'global' }, ({ code, path, error, set }) => {
     const handler = errorHandlers[code] || errorHandlers['INTERNAL_SERVER_ERROR'];
     const errorResult =  handler(error, path);
