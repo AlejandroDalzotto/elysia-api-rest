@@ -55,7 +55,7 @@ export const globalErrorHandler = new Elysia({ name: 'errors.handler' })
   .error('INVALID_JWT', InvalidJwtError)
   .error('INVALID_ROLE', InvalidRoleError)
   .error('JWT_NOT_PROVIDED', JwtNotProvidedError)
-  .onError(({ code, path, error }) => {
+  .onError({ as: 'global' }, ({ code, path, error }) => {
     const handler = errorHandlers[code] || errorHandlers['INTERNAL_SERVER_ERROR'];
     return handler(error, path);
   });
