@@ -1,6 +1,6 @@
 import type { ErrorCause } from "@/types"
 
-export class InvalidRoleError extends Error {
+export class AuthorizationError extends Error {
 
   readonly message: string
   readonly cause?: ErrorCause

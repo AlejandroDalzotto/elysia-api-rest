@@ -8,7 +8,7 @@ import { jwtPayloadSchema } from '@/elysia-schemas';
 import type { Role } from '@/db/schema/users.sql';
 import { InvalidJwtError } from '@/exceptions/invalidjwt.error';
 import { JwtNotProvidedError } from '@/exceptions/jwtnotprovided.error';
-import { InvalidRoleError } from '@/exceptions/invalidrole.error';
+import { AuthorizationError } from '@/exceptions/authorization.error';
 
 export const authMiddleware = new Elysia({ name: 'middlewares.auth' })
   .use(
@@ -71,7 +71,7 @@ export const authMiddleware = new Elysia({ name: 'middlewares.auth' })
 
           const user = await UserService.findOneByUsername(payload.sub)
           if (user.role !== value) {
-            throw new InvalidRoleError('Unathorized action for user', { status: 403, detail: 'You don\'t have permissions to perform this action' })
+            throw new AuthorizationError('Unathorized action for user', { status: 403, detail: 'User doesn\'t have permissions to perform this action' })
           }
         }
       }

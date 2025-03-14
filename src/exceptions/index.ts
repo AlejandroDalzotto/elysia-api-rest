@@ -1,9 +1,10 @@
 import { Elysia } from 'elysia';
 import { AppDatabaseError } from '@/exceptions/appdatabase.error';
 import { InvalidJwtError } from '@/exceptions/invalidjwt.error';
-import { InvalidRoleError } from '@/exceptions/invalidrole.error';
+import { AuthorizationError } from '@/exceptions/authorization.error';
 import { JwtNotProvidedError } from '@/exceptions/jwtnotprovided.error';
 import type { OnErrorResponse } from '@/types';
+import { AuthenticationError } from '@/exceptions/authentication.error';
 
 const errorHandlers: Record<string, (error: any, path: string) => OnErrorResponse> = {
   'APP_DATABASE': (error, path) => ({
@@ -53,8 +54,9 @@ const errorHandlers: Record<string, (error: any, path: string) => OnErrorRespons
 export const globalErrorHandler = new Elysia({ name: 'errors.handler' })
   .error('APP_DATABASE', AppDatabaseError)
   .error('INVALID_JWT', InvalidJwtError)
-  .error('INVALID_ROLE', InvalidRoleError)
+  .error('INVALID_ROLE', AuthorizationError)
   .error('JWT_NOT_PROVIDED', JwtNotProvidedError)
+  .error('AUTHENTICATION', AuthenticationError)
   .onError({ as: 'global' }, ({ code, path, error, set }) => {
     const handler = errorHandlers[code] || errorHandlers['INTERNAL_SERVER_ERROR'];
     const errorResult =  handler(error, path);
