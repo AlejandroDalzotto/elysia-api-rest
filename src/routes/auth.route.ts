@@ -1,17 +1,18 @@
 import { Elysia } from 'elysia';
 import { UserService } from '@/services/user.service';
-import { authService } from '@/services/auth.service';
+import { authMiddleware } from '@/middlewares/auth.middleware';
 import { authModels } from '@/models/auth';
 import { generateToken } from '@/utils/jwt';
+import { AuthService } from '@/services/auth.service';
 
 export const authRoutes = new Elysia({ prefix: '/auth' })
   .use(authModels)
-  .use(authService)
+  .use(authMiddleware)
   .put('/sign-up', async ({ body }) => {
 
     const { email, password, username } = body
 
-    const user = await UserService.create({ email, password, username })
+    const user = await AuthService.register({ email, password, username })
 
     return {
       data: user
@@ -27,7 +28,7 @@ export const authRoutes = new Elysia({ prefix: '/auth' })
 
     const { password, email } = body
 
-    const data = await UserService.validateCredentials(email, password)
+    const data = await AuthService.validateCredentials(email, password)
 
     const accessTokenExpirationDate = Date.now() + 60 * 60 * 24 * 1000 // 1 day
     const refreshTokenExpirationDate = Date.now() + 60 * 60 * 24 * 7 * 1000 // 7 days

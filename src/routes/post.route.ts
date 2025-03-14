@@ -1,4 +1,4 @@
-import { authService } from '@/services/auth.service';
+import { authMiddleware } from '@/middlewares/auth.middleware';
 import { PostService } from '@/services/post.service';
 import { Elysia, t } from 'elysia';
 
@@ -24,7 +24,7 @@ const postModels = new Elysia({ name: 'models.posts' })
   })
 
 export const postsRoutes = new Elysia({ prefix: '/posts' })
-  .use(authService)
+  .use(authMiddleware)
   .use(postModels)
   .get('/', async ({ query: { limit, offset, term } }) => {
 

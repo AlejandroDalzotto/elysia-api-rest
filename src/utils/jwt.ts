@@ -1,12 +1,12 @@
 import type { InferContext } from 'elysia';
 import type { JwtPayload } from '@/types';
-import { authService } from '@/services/auth.service';
+import { authMiddleware } from '@/middlewares/auth.middleware';
 import { InvalidJwtError } from '@/exceptions/invalidjwt.error';
 
 export async function verifyToken(
   token: string,
   tokenType: 'access' | 'refresh',
-  { jwt }: Pick<InferContext<typeof authService>, | 'jwt'>
+  { jwt }: Pick<InferContext<typeof authMiddleware>, | 'jwt'>
 ): Promise<JwtPayload> {
   const payload = await jwt.verify(token);
   if (!payload) {
@@ -21,7 +21,7 @@ export async function verifyToken(
 export async function generateToken(
   sub: string,
   expiresIn: number,
-  { jwt }: Pick<InferContext<typeof authService>, | 'jwt'>
+  { jwt }: Pick<InferContext<typeof authMiddleware>, | 'jwt'>
 ) {
   const now = Date.now();
   return await jwt.sign({

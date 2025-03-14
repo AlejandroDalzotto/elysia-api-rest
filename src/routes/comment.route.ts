@@ -1,4 +1,4 @@
-import { authService } from '@/services/auth.service';
+import { authMiddleware } from '@/middlewares/auth.middleware';
 import { CommentService } from '@/services/comment.service';
 import Elysia, { t } from 'elysia';
 
@@ -17,7 +17,7 @@ const commentModels = new Elysia({ name: 'models.comments' })
   })
 
 export const commentsRoutes = new Elysia({ prefix: '/comments' })
-  .use(authService)
+  .use(authMiddleware)
   .use(commentModels)
   .get('/:postId', async ({ params: { postId } }) => {
 

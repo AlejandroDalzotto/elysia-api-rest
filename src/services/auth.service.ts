@@ -1,79 +1,61 @@
-import { Elysia } from 'elysia';
-import { jwt } from '@elysiajs/jwt';
-import { JWT_SECRET } from '@/config/env';
-import { UserService } from '@/services/user.service';
-import { generateToken, verifyToken } from '@/utils/jwt';
-import { ACCESS_TOKEN_EXPIRATION_MILISECONDS, REFRESH_TOKEN_EXPIRATION_MILISECONDS } from '@/utils/consts';
-import { jwtPayloadSchema } from '@/elysia-schemas';
-import type { Role } from '@/db/schema/users.sql';
-import { InvalidJwtError } from '@/exceptions/invalidjwt.error';
-import { JwtNotProvidedError } from '@/exceptions/jwtnotprovided.error';
-import { InvalidRoleError } from '@/exceptions/invalidrole.error';
+import { UserRepository } from '@/repositories/user.repository';
+import type { InsertUser } from '@/db/schema/users.sql';
+import { UniqueConstraintError } from '@/exceptions/uniqueconstrainterror.error';
+import { AuthenticationError } from '@/exceptions/authentication.error';
 
-export const authService = new Elysia({ name: 'services.auth' })
-  .use(
-    jwt({
-      name: 'jwt',
-      secret: JWT_SECRET,
-      schema: jwtPayloadSchema
-    })
-  )
-  .macro({
-    auth: {
-      async resolve({ jwt, cookie: { accessToken, refreshToken } }) {
+export abstract class AuthService {
 
-        if (!accessToken.value || !refreshToken.value) {
-          throw new JwtNotProvidedError('Either access or refresh token are missing', { status: 403, detail: 'Token is missing, please make sure to provide both access and refresh tokens' });
-        }
+  static async register(newUser: InsertUser) {
 
-        const accessTokenPayload = await verifyToken(accessToken.value, 'access', { jwt });
-
-        const now = Date.now();
-        if (accessTokenPayload.expiresAt < now) {
-          // ❌ token expired
-
-          // We have to validate the type of the verification result, if we don't we won't have the typescript inference.
-          const refreshTokenPayload = await verifyToken(refreshToken.value, 'refresh', { jwt });
-
-          const userRefreshToken = await UserService.findOneByUsername(refreshTokenPayload.sub);
-          if (!userRefreshToken) {
-            throw new InvalidJwtError('Refresh token is invalid', { status: 403, detail: 'The integrity of the token might be affected' });
-          }
-
-          // Sign new tokens to renew the older ones.
-          const newAccessToken = await generateToken(userRefreshToken.username, ACCESS_TOKEN_EXPIRATION_MILISECONDS, { jwt }); // 1 day
-          accessToken.set({ value: newAccessToken, httpOnly: true, secure: true });
-
-          const newRefreshToken = await generateToken(userRefreshToken.username, REFRESH_TOKEN_EXPIRATION_MILISECONDS, { jwt }); // 7 days
-          refreshToken.set({ value: newRefreshToken, httpOnly: true, secure: true });
-
-          return { userId: userRefreshToken.id };
-        }
-
-        const user = await UserService.findOneByUsername(accessTokenPayload.sub);
-        if (!user) {
-          throw new InvalidJwtError('Acess token is invalid', { status: 403, detail: 'The integrity of the token might be affected' });
-        }
-
-        return { userId: user.id };
-      }
-    },
-    role(value: Role | false) {
-
-      if (!value) return
-
-      return {
-        async beforeHandle({ jwt, cookie: { accessToken } }) {
-
-          const payload = await jwt.verify(accessToken.value!)
-
-          if (!payload) throw new JwtNotProvidedError('Access token is invalid', { status: 401, detail: 'Please provide a valid access token' })
-
-          const user = await UserService.findOneByUsername(payload.sub)
-          if (user.role !== value) {
-            throw new InvalidRoleError('Unathorized action for user', { status: 403, detail: 'You don\'t have permissions to perform this action' })
-          }
-        }
-      }
+    const isEmailAlreadyTaken = await UserRepository.getOneByEmail(newUser.email)
+    if (isEmailAlreadyTaken) {
+      throw new UniqueConstraintError('Error creating user', {
+        detail: `Email ${newUser.email} is already taken, please provide another.`,
+        status: 400
+      })
     }
-  })
+
+    const isUsernameAlreadyTaken = await UserRepository.getOneByUsername(newUser.username)
+    if (isUsernameAlreadyTaken) {
+      throw new UniqueConstraintError('Error creating user', {
+        detail: `Username ${newUser.username} is already taken, please provide another.`,
+        status: 400
+      })
+    }
+
+    const encryptedPassword = await Bun.password.hash(newUser.password)
+    const data = await UserRepository.save({
+      email: newUser.email,
+      username: newUser.username,
+      password: encryptedPassword
+    })
+
+    return data
+  }
+
+  static async validateCredentials(email: string, password: string) {
+
+    // We should validate if user with a certain email exist.
+    const user = await UserRepository.getOneByEmail(email)
+    if (!user) {
+      throw new AuthenticationError('Error validating credentials', {
+        detail: 'Invalid or missing email or password',
+        status: 400
+      })
+    }
+
+    const isPasswordValid = await Bun.password.verify(password, user.password)
+
+    if (!isPasswordValid) {
+      throw new AuthenticationError('Error validating credentials', {
+        detail: 'Invalid or missing email or password',
+        status: 400
+      })
+    }
+
+    return {
+      id: user.id,
+      username: user.username
+    }
+  }
+}
