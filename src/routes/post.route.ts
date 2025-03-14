@@ -1,27 +1,8 @@
+import { UserIdConflictError } from '@/exceptions/useridconflict.error';
 import { authMiddleware } from '@/middlewares/auth.middleware';
+import { postModels } from '@/models/post';
 import { PostService } from '@/services/post.service';
-import { Elysia, t } from 'elysia';
-
-const postModels = new Elysia({ name: 'models.posts' })
-  .model({
-    'posts.create.body.req': t.Object({
-      title: t.String(),
-      body: t.String(),
-      authorId: t.String()
-    }),
-    'posts.update.body.req': t.Object({
-      title: t.Optional(t.String()),
-      body: t.Optional(t.String()),
-      authorId: t.String()
-    }),
-    'posts.get.query.req': t.Partial(
-      t.Object({
-        limit: t.Number(),
-        offset: t.Number(),
-        term: t.String(),
-      })
-    )
-  })
+import { Elysia } from 'elysia';
 
 export const postsRoutes = new Elysia({ prefix: '/posts' })
   .use(authMiddleware)
@@ -52,14 +33,12 @@ export const postsRoutes = new Elysia({ prefix: '/posts' })
       data: post
     }
   }, {
-    params: t.Object({
-      id: t.Number()
-    })
+    params: 'posts.get.params.req'
   })
-  .put('/', async ({ body, userId, error }) => {
+  .put('/', async ({ body, userId }) => {
 
     if (userId !== body.authorId) {
-      return error(403, 'Users cannot create posts on behalf of anothers.')
+      throw new UserIdConflictError('Error while creating post.')
     }
 
     const postCreated = await PostService.create(body)
@@ -71,10 +50,10 @@ export const postsRoutes = new Elysia({ prefix: '/posts' })
     auth: true,
     body: 'posts.create.body.req'
   })
-  .patch('/:id', async ({ body, userId, error, params: { id } }) => {
+  .patch('/:id', async ({ body, userId, params: { id } }) => {
 
     if (userId !== body.authorId) {
-      return error(403, 'Users cannot modify posts on behalf of anothers.')
+      throw new UserIdConflictError('Error while updating post.')
     }
 
     const postCreated = await PostService.update(body, id)
@@ -85,16 +64,14 @@ export const postsRoutes = new Elysia({ prefix: '/posts' })
   }, {
     auth: true,
     body: 'posts.update.body.req',
-    params: t.Object({
-      id: t.Number()
-    })
+    params: 'posts.get.params.req'
   })
-  .delete('/:id', async ({ userId, error, params: { id } }) => {
+  .delete('/:id', async ({ userId, params: { id } }) => {
 
     const post = await PostService.findById(id)
 
     if (userId !== post.authorId) {
-      return error(403, 'Users cannot delete posts on behalf of anothers.')
+      throw new UserIdConflictError('Error while deleting post.')
     }
 
     const data = await PostService.remove(id)
@@ -104,7 +81,5 @@ export const postsRoutes = new Elysia({ prefix: '/posts' })
     }
   }, {
     auth: true,
-    params: t.Object({
-      id: t.Number()
-    })
+    params: 'posts.get.params.req'
   })

@@ -6,6 +6,7 @@ import { JwtNotProvidedError } from '@/exceptions/jwtnotprovided.error';
 import type { OnErrorResponse } from '@/types';
 import { AuthenticationError } from '@/exceptions/authentication.error';
 import { UniqueConstraintError } from '@/exceptions/uniqueconstrainterror.error';
+import { UserIdConflictError } from './useridconflict.error';
 
 const errorHandlers: Record<string, (error: any, path: string) => OnErrorResponse> = {
   'APP_DATABASE': (error, path) => ({
@@ -62,11 +63,18 @@ const errorHandlers: Record<string, (error: any, path: string) => OnErrorRespons
     detail: error.cause?.detail,
     path,
   }),
+  'USER_ID_CONFLICT': (error, path) => ({
+    code: error.cause.status,
+    message: error.message,
+    detail: error.cause.detail,
+    path,
+  }),
 };
 
 export const globalErrorHandler = new Elysia({ name: 'errors.handler' })
   .error('APP_DATABASE', AppDatabaseError)
   .error('INVALID_JWT', InvalidJwtError)
+  .error('USER_ID_CONFLICT', UserIdConflictError)
   .error('INVALID_ROLE', AuthorizationError)
   .error('JWT_NOT_PROVIDED', JwtNotProvidedError)
   .error('AUTHENTICATION', AuthenticationError)
