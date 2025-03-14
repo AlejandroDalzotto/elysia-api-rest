@@ -1,25 +1,15 @@
+import { Elysia } from 'elysia';
 import { authMiddleware } from '@/middlewares/auth.middleware';
+import { commentModels } from '@/models/comment';
 import { CommentService } from '@/services/comment.service';
-import Elysia, { t } from 'elysia';
+import { UserIdConflictError } from '@/exceptions/useridconflict.error';
 
-const commentModels = new Elysia({ name: 'models.comments' })
-  .model({
-    'comments.create.body.req': t.Object({
-      postId: t.Number(),
-      body: t.String(),
-      authorId: t.String()
-    }),
-    'comments.update.body.req': t.Object({
-      title: t.Optional(t.String()),
-      body: t.Optional(t.String()),
-      authorId: t.String()
-    })
-  })
+
 
 export const commentsRoutes = new Elysia({ prefix: '/comments' })
   .use(authMiddleware)
   .use(commentModels)
-  .get('/:postId', async ({ params: { postId } }) => {
+  .get('/:id', async ({ params: { id: postId } }) => {
 
     const posts = await CommentService.findAll(postId)
 
@@ -27,15 +17,13 @@ export const commentsRoutes = new Elysia({ prefix: '/comments' })
       data: posts
     }
   }, {
-    params: t.Object({
-      postId: t.Number()
-    })
+    params: 'comments.get.query.req'
   })
-  .put('/', async ({ body, userId, error }) => {
+  .put('/', async ({ body, userId }) => {
     const { authorId, body: content, postId } = body
 
     if (userId !== authorId) {
-      return error(403, 'Users cannot create comments on behalf of anothers.')
+      throw new UserIdConflictError('Error while creating comment.')
     }
 
     const commentCreated = await CommentService.create(content, postId, authorId)
@@ -53,9 +41,7 @@ export const commentsRoutes = new Elysia({ prefix: '/comments' })
 
   }, {
     auth: true,
-    params: t.Object({
-      id: t.Number()
-    })
+    params: 'comments.get.query.req'
   })
   .patch('/dislike/:id', async ({ params: { id }, userId }) => {
 
@@ -63,7 +49,5 @@ export const commentsRoutes = new Elysia({ prefix: '/comments' })
 
   }, {
     auth: true,
-    params: t.Object({
-      id: t.Number()
-    })
+    params: 'comments.get.query.req'
   })
