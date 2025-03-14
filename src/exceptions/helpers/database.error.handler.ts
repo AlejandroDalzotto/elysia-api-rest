@@ -3,6 +3,13 @@ import { AppDatabaseError } from '@/exceptions/appdatabase.error';
 import { DrizzleError, TransactionRollbackError } from 'drizzle-orm';
 
 export function handleDatabaseError(error: unknown, errorMessage: string): never {
+  if ((error as Error).name === 'PostgresError') {
+    throw new AppDatabaseError('Error while trying to connect to the database', {
+      detail: (error as Error).message,
+      status: 500
+    })
+  }
+
   if (error instanceof DatabaseError) {
     switch (error.code) {
       case '23505': throw new AppDatabaseError(errorMessage, {
