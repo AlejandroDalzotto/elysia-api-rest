@@ -4,8 +4,6 @@ import { commentModels } from '@/models/comment';
 import { CommentService } from '@/services/comment.service';
 import { UserIdConflictError } from '@/exceptions/useridconflict.error';
 
-
-
 export const commentsRoutes = new Elysia({ prefix: '/comments' })
   .use(authMiddleware)
   .use(commentModels)
@@ -35,17 +33,9 @@ export const commentsRoutes = new Elysia({ prefix: '/comments' })
     auth: true,
     body: 'comments.create.body.req'
   })
-  .patch('/like/:id', async ({ params: { id }, userId }) => {
+  .patch('/like', async ({ params: { id }, userId }) => {
 
-    await CommentService.updateLikes(id, userId, true)
-
-  }, {
-    auth: true,
-    params: 'comments.get.query.req'
-  })
-  .patch('/dislike/:id', async ({ params: { id }, userId }) => {
-
-    await CommentService.updateLikes(id, userId, false)
+    await CommentService.updateLikes(id, userId)
 
   }, {
     auth: true,

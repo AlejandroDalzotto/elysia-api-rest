@@ -29,23 +29,20 @@ export abstract class CommentService {
     return data
   }
 
-  static async updateLikes(commentId: number, userId: string, like: boolean) {
+  static async updateLikes(commentId: number, userId: string) {
     const comment = await CommentRepository.getById(commentId)
 
-    if(!comment) {
+    if (!comment) {
       throw new NotFoundError(`Comment ${commentId} not found. Please provide a correct id.`)
     }
 
     const existingLike = await CommentRepository.getLike(commentId, userId)
 
-    if (like) {
-      if (!existingLike) {
-        await CommentRepository.increaseLikes(commentId, userId)
-      }
-    } else {
-      if (existingLike) {
-        await CommentRepository.decreaseLikes(commentId, userId)
-      }
+    if (!existingLike) {
+      await CommentRepository.increaseLikes(commentId, userId)
+    }
+    if (existingLike) {
+      await CommentRepository.decreaseLikes(commentId, userId)
     }
   }
 
