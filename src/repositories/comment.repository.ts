@@ -83,4 +83,16 @@ export abstract class CommentRepository {
     }
   }
 
+  static async remove(id: number) {
+
+    try {
+      const [data] = await db.delete(comments).where(eq(comments.id, id)).returning()
+
+      return data;
+    } catch (error) {
+      console.error(`Error deleting comment:`, error);
+      throw error;
+    }
+  }
+
 }

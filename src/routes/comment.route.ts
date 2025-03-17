@@ -33,10 +33,23 @@ export const commentsRoutes = new Elysia({ prefix: '/comments' })
     auth: true,
     body: 'comments.create.body.req'
   })
-  .patch('/like', async ({ params: { id }, userId }) => {
+  .patch('/like/:id', async ({ params: { id }, userId }) => {
 
     await CommentService.updateLikes(id, userId)
 
+  }, {
+    auth: true,
+    params: 'comments.get.query.req'
+  })
+  .delete('/:id', async ({ params: { id }, userId }) => {
+
+    const comment = await CommentService.findById(id)
+
+    if (comment.authorId !== userId) {
+      throw new UserIdConflictError('Error while deleting comment')
+    }
+
+    await CommentService.remove(comment.id)
   }, {
     auth: true,
     params: 'comments.get.query.req'

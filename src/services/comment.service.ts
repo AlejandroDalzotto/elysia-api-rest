@@ -17,6 +17,17 @@ export abstract class CommentService {
     return data
   }
 
+  static async findById(id: number) {
+
+    const data = await CommentRepository.getById(id)
+
+    if(!data) {
+      throw new NotFoundError('Error finding comment')
+    }
+
+    return data
+  }
+
   static async create(body: string, postId: number, authorId: string) {
     const post = await PostRepository.getById(postId)
 
@@ -44,6 +55,18 @@ export abstract class CommentService {
     if (existingLike) {
       await CommentRepository.decreaseLikes(commentId, userId)
     }
+  }
+
+  static async remove(commentId: number) {
+    const comment = await CommentRepository.getById(commentId)
+
+    if (!comment) {
+      throw new NotFoundError(`Comment ${commentId} not found. Please provide a correct id.`)
+    }
+
+    const existingLike = await CommentRepository.remove(commentId)
+
+    
   }
 
 }
