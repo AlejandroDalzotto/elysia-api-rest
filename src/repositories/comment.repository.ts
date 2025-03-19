@@ -83,6 +83,18 @@ export abstract class CommentRepository {
     }
   }
 
+  static async update(id: number, body: string) {
+
+    try {
+      const [data] = await db.update(comments).set({ body }).returning()
+
+      return data;
+    } catch (error) {
+      console.error(`Error updating comment ${id}:`, error);
+      throw error;
+    }
+  }
+
   static async remove(id: number) {
 
     try {

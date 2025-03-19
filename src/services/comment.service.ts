@@ -57,6 +57,18 @@ export abstract class CommentService {
     }
   }
 
+  static async editContent(id: number, body: string) {
+    const comment = await CommentRepository.getById(id)
+
+    if (!comment) {
+      throw new NotFoundError(`Comment ${id} not found. Please provide a correct id.`)
+    }
+
+    const data = await CommentRepository.update(id, body)
+
+    return data
+  }
+
   static async remove(commentId: number) {
     const comment = await CommentRepository.getById(commentId)
 

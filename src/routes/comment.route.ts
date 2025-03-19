@@ -33,6 +33,23 @@ export const commentsRoutes = new Elysia({ prefix: '/comments' })
     auth: true,
     body: 'comments.create.body.req'
   })
+  .patch('/:id', async ({ params: { id }, userId, body }) => {
+
+    const { body: content } = body
+
+    const comment = await CommentService.findById(id)
+
+    if (comment.authorId !== userId) {
+      throw new UserIdConflictError('Error while updating comment')
+    }
+
+    const newComment = await CommentService.editContent(id, content)
+
+  }, {
+    auth: true,
+    params: 'comments.get.query.req',
+    body: 'comments.create.body.req'
+  })
   .patch('/like/:id', async ({ params: { id }, userId }) => {
 
     await CommentService.updateLikes(id, userId)
